@@ -9,12 +9,46 @@
 #define ERROR_EMPTY_INPUT_FILE 2
 #define ERROR_INVALID_OUTPUT_FILE 3
 
+/*------------------------------ Array dinámico -----------------------------*/
+typedef struct {
+    char **array;
+    size_t used;
+    size_t size;
+} Array;
+
+void initArray(Array * a, size_t initialSize) {
+    a->array = (char **)malloc(initialSize * sizeof(char *));
+    a->used = 0;
+    a->size = initialSize;
+}
+
+void insertArray(Array *a, char * element) {
+    // a->used is the number of used entries, because a->array[a->used++] updates a->used only *after* the array has been accessed.
+    // Therefore a->used can go up to a->size
+    if (a->used == a->size) {
+        a->size++;
+        a->array = (char **)realloc(a->array, a->size * sizeof(char *));
+    }
+    a->array[a->used++] = element;
+}
+
+void freeDynamicArray(Array *a) {
+    free(a->array);
+    a->array = NULL;
+    a->used = a->size = 0;
+}
+
+/*------------------------------------Array dinamico----------------------------*/
+
 long getNumberOfWords(FILE*);
 void writeOutput(char**,long,char*);
 void freeArray(char**,long);
 void showHelp();
 void showVersion();
 void showError(int);
+Array findCapicuaWords(char**, long);
+int isCapicua(char*);
+int getNumberOfLetters(char*);
 
 int main(int argc, char *argv[]){
 	if (argc == 2){
@@ -25,18 +59,21 @@ int main(int argc, char *argv[]){
 		} else {
 			showError(ERROR_INVALID_PARAMETERS);
 		}
-	} else if (argc == 6){
+	} else if (argc == 5){
 		int validFile = 1;
-		if (((strcmp(argv[2], "-i") == 0)||((strcmp(argv[2], "--input") == 0))) && ((strcmp(argv[4], "-o") == 0) || (strcmp(argv[4], "--output") == 0))){
+		if (((strcmp(argv[1], "-i") == 0)||((strcmp(argv[1], "--input") == 0))) && ((strcmp(argv[3], "-o") == 0) || (strcmp(argv[3], "--output") == 0))){
+
 			FILE *inputFile;
 			char str[BUFFER+1];
 			char** array;
 			long pos = 0;
 			long numberOfWords = 0;
-			inputFile = fopen(argv[3],"r");
+			inputFile = fopen(argv[2],"r");
+
 			if (inputFile)
 			{
 				numberOfWords = getNumberOfWords(inputFile);
+				printf("%i\n", numberOfWords);
 				fseek(inputFile, 0L, SEEK_END);
 				long inputFileSize = ftell(inputFile);
 				if(inputFileSize > 0){
@@ -74,7 +111,7 @@ int main(int argc, char *argv[]){
 							for (index = 0; index < strlen(temp); index++)
 							{
 								aChar = temp[index];
-								if (((aChar > 0) && (aChar < 97)) || (aChar >= 123))
+								if (((aChar > 0) && (aChar < 47)) || (aChar > 57) && (aChar < 65) || (aChar >= 123))
 								{
 									temp[index] = '|';
 								}
@@ -107,16 +144,13 @@ int main(int argc, char *argv[]){
 				validFile = 0;
 			}
 			if(validFile == 1){
-				printf("%s\n", "Start of sorting");
-				if ((strcmp(argv[1], "-b") == 0) || (strcmp(argv[1], "--bsort") == 0)){
-					bubbleSort(array, pos);
-					writeOutput(array,pos,argv[5]);
-				} else if ((strcmp(argv[1], "-q") == 0) || (strcmp(argv[1], "--qsort") == 0)){
-					quickSort(array, pos);
-					writeOutput(array,pos,argv[5]);
-				} else {
-					showError(ERROR_INVALID_PARAMETERS);
-				}
+				printf("%s\n", "Going to validate capicua words");
+				Array output;
+				output = findCapicuaWords(array, numberOfWords);
+
+				printf("%s\n", argv[4]);
+				writeOutput(output.array, output.size, argv[4]);
+				freeDynamicArray(&output);
 				freeArray(array,numberOfWords);
 			}
 		} else {
@@ -197,4 +231,40 @@ void showError(int errorCode){
 	if(errorCode == ERROR_INVALID_PARAMETERS){
 		printf("%s\n","Invalid arguments. Type 'tp0 -h' for help. Program terminated");
 	}
+}
+
+Array findCapicuaWords(char** array, long numberOfWords){
+	Array output;
+	initArray(&output, 0);
+	printf("%i\n", numberOfWords);
+
+	for(int i = 0; i < numberOfWords; i++){
+		printf("%s\n", array[i]);
+		if(isCapicua(array[i])){
+			insertArray(&output, array[i]);
+		}
+	}
+	printf("%s\n", "aca llega");
+
+	return output;
+}
+
+int isCapicua(char * word){
+	//paja hacer esto, no se me ocurre otra manera
+	int numberOfLetters;
+	numberOfLetters = getNumberOfLetters(word);
+	for(int i = 0; i < numberOfLetters; i++){
+		if(word[i] != word[numberOfLetters - i - 1]){
+			return 0;
+		}
+	}
+	return 1;
+}
+
+int getNumberOfLetters(char * word){
+	int i = 0;
+	while(word[i]){
+		i++;
+	}
+	return i;
 }
