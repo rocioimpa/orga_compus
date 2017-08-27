@@ -73,7 +73,6 @@ int main(int argc, char *argv[]){
 			if (inputFile)
 			{
 				numberOfWords = getNumberOfWords(inputFile);
-				printf("%i\n", numberOfWords);
 				fseek(inputFile, 0L, SEEK_END);
 				long inputFileSize = ftell(inputFile);
 				if(inputFileSize > 0){
@@ -98,13 +97,11 @@ int main(int argc, char *argv[]){
 							int index;
 							int j;
 							char aChar;
-							for (index = 0, j = 0; index < strlen(str); index++)
-							{
+							for (index = 0, j = 0; index < strlen(str); index++){
 									aChar = str[index];
-									if (aChar != 39)
-									{
-										temp[j] = tolower(aChar);
-      							j++;
+									if (aChar != 39){
+    									temp[j] = aChar;
+    		                            j++;
 									}
 							}
 							temp[j] = '\0';
@@ -234,19 +231,16 @@ void showError(int errorCode){
 }
 
 Array findCapicuaWords(char** array, long numberOfWords){
-	Array output;
-	initArray(&output, 0);
-	printf("%i\n", numberOfWords);
+  Array output;
+  initArray(&output, 0);
 
-	for(int i = 0; i < numberOfWords; i++){
-		printf("%s\n", array[i]);
-		if(isCapicua(array[i])){
-			insertArray(&output, array[i]);
-		}
-	}
-	printf("%s\n", "aca llega");
-
-	return output;
+  for(int i = 0; i < numberOfWords; i++){
+    printf("%s\n", array[i]);
+    if(isCapicua(array[i])){
+      insertArray(&output, array[i]);
+    }
+  }
+  return output;
 }
 
 int isCapicua(char * word){
