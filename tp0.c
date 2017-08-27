@@ -247,7 +247,7 @@ Array findCapicuaWords(char** array, long numberOfWords){
 
 int wordIsPalindrome(char * word){
 	int numberOfLetters;
-	numberOfLetters = getNumberOfLetters(word);
+	numberOfLetters = getWordLength(word);
     if(numberOfLetters > 1){
         for(int i = 0; i < numberOfLetters; i++){
     		if(word[i] != word[numberOfLetters - i - 1]){
