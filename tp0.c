@@ -65,7 +65,7 @@ int main(int argc, char *argv[]){
 
 			FILE *inputFile;
 			char str[BUFFER+1];
-			char** array;
+			Array array;
 			long pos = 0;
 			long numberOfWords = 0;
 			inputFile = fopen(argv[2],"r");
@@ -77,16 +77,16 @@ int main(int argc, char *argv[]){
 				long inputFileSize = ftell(inputFile);
 				if(inputFileSize > 0){
 					fseek(inputFile, 0L, SEEK_SET);
-					array = malloc((numberOfWords+1)*sizeof(char*));
-						char* p;
-						char* text = (char *) malloc(sizeof(char) * inputFileSize + 1);
-						memset(text,'\0', inputFileSize);
+                    initArray(&array, 0);
+					char* p;
+					char* text = (char *) malloc(sizeof(char) * inputFileSize + 1);
+					memset(text,'\0', inputFileSize);
 
-						int i;
-						for (i = 0; i < numberOfWords-1; i++)
-						{
-							array[i] = NULL;
-						}
+						// int i;
+						// for (i = 0; i < numberOfWords-1; i++)
+						// {
+						// 	array[i] = NULL;
+						// }
 
 						while(fgets(str, sizeof(str), inputFile)!= NULL)
 						{
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
 							word = malloc((strlen(p) + 1)*sizeof(char));
 							memset(word,'\0', strlen(word));
 							strcpy(word, p);
-							array[pos] = word;
+							insertArray(&array, word);
 							p = strtok(NULL, "|");
 							pos++;
 						}
@@ -143,12 +143,13 @@ int main(int argc, char *argv[]){
 			if(validFile == 1){
 				printf("%s\n", "Going to validate capicua words");
 				Array output;
-				output = findCapicuaWords(array, numberOfWords);
+				output = findCapicuaWords(array.array, array.size);
 
 				printf("%s\n", argv[4]);
 				writeOutput(output.array, output.size, argv[4]);
 				freeDynamicArray(&output);
-				freeArray(array,numberOfWords);
+				// freeArray(array,numberOfWords);
+                freeDynamicArray(&array);
 			}
 		} else {
 			showError(ERROR_INVALID_PARAMETERS);
@@ -247,11 +248,13 @@ int isCapicua(char * word){
 	//paja hacer esto, no se me ocurre otra manera
 	int numberOfLetters;
 	numberOfLetters = getNumberOfLetters(word);
-	for(int i = 0; i < numberOfLetters; i++){
-		if(word[i] != word[numberOfLetters - i - 1]){
-			return 0;
-		}
-	}
+    if(numberOfLetters > 1){
+        for(int i = 0; i < numberOfLetters; i++){
+    		if(word[i] != word[numberOfLetters - i - 1]){
+    			return 0;
+    		}
+    	}
+    }
 	return 1;
 }
 
