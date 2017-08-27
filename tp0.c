@@ -47,8 +47,9 @@ void showHelp();
 void showVersion();
 void showError(int);
 Array findCapicuaWords(char**, long);
-int isCapicua(char*);
-int getNumberOfLetters(char*);
+int wordIsPalindrome(char*);
+int getWordLength(char*);
+char* convertWordToLowerCase(char*);
 
 int main(int argc, char *argv[]){
 	if (argc == 2){
@@ -237,15 +238,14 @@ Array findCapicuaWords(char** array, long numberOfWords){
 
   for(int i = 0; i < numberOfWords; i++){
     printf("%s\n", array[i]);
-    if(isCapicua(array[i])){
+    if(wordIsPalindrome(array[i])){
       insertArray(&output, array[i]);
     }
   }
   return output;
 }
 
-int isCapicua(char * word){
-	//paja hacer esto, no se me ocurre otra manera
+int wordIsPalindrome(char * word){
 	int numberOfLetters;
 	numberOfLetters = getNumberOfLetters(word);
     if(numberOfLetters > 1){
@@ -258,7 +258,15 @@ int isCapicua(char * word){
 	return 1;
 }
 
-int getNumberOfLetters(char * word){
+char* convertWordToLowerCase(char*originalWord){
+  char* lowerCaseWord;
+  for(int i = 0; originalWord[i]; i++){
+    lowerCaseWord[i] = tolower(originalWord[i]);
+  }
+  return lowerCaseWord;
+}
+
+int getWordLength(char * word){
 	int i = 0;
 	while(word[i]){
 		i++;
