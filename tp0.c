@@ -81,6 +81,8 @@ char* convertWordToLowerCase(char*);
 void writeStadarOutput(char**, long);
 char * searchArgumentValue(char**, int, char*, char*);
 char* getFromStandardInput();
+char removeDiacritic(char*);
+
 
 int main(int argc, char *argv[]){
 	if (argc == 2){
@@ -279,6 +281,13 @@ int wordIsPalindrome(char * word){
     if(numberOfLetters <= 1){
         return 0;
     }
+    
+    char* lowerCaseWord = convertWordToLowerCase(word);
+    for(int i = 0; i < numberOfLetters; i++){
+		if(lowerCaseWord[i] != lowerCaseWord[numberOfLetters - i - 1]){
+			return 0;
+		}
+	}
 
     for(int i = 0; i < numberOfLetters; i++){
 		if(word[i] != word[numberOfLetters - i - 1]){
@@ -292,10 +301,25 @@ int wordIsPalindrome(char * word){
 char* convertWordToLowerCase(char*originalWord){
   char* lowerCaseWord;
   for(int i = 0; originalWord[i]; i++){
+    printf("%c\n", originalWord[i]);
     lowerCaseWord[i] = tolower(originalWord[i]);
+    //lowerCaseWord[i] = removeDiacritic(lowerCaseWord[i]);
   }
   return lowerCaseWord;
 }
+
+//char removeDiacritic(char* letter){
+//  printf("%s\n", letter);
+//  switch ((char)letter) {
+//    case 'à': letter = 'a'; break;
+//    case 'è': letter = 'e'; break;
+//    case 'é': letter = 'e'; break;
+//    case 'ì': letter = 'i'; break;
+//    case 'ò': letter = 'o'; break;
+//    case 'ù': letter = 'u'; break;
+//  }
+//  return letter;
+//}
 
 int getWordLength(char * word){
 	int i = 0;
