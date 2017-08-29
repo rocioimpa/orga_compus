@@ -3,12 +3,14 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <poll.h>
 
 #define BUFFER 100
 #define ERROR_INVALID_PARAMETERS 0
 #define ERROR_INVALID_INPUT_FILE 1
 #define ERROR_EMPTY_INPUT_FILE 2
 #define ERROR_INVALID_OUTPUT_FILE 3
+#define ERROR_NO_TEXT_GIVEN 4
 
 /*------------------------------ Array dinámico -----------------------------*/
 typedef struct {
@@ -102,11 +104,11 @@ int main(int argc, char *argv[]){
         Array array;
         if(!input){
             array = getFromStandardInput();
+            if(array.size == 0){
+                showError(ERROR_NO_TEXT_GIVEN);
+                return 0;
+            }
             validFile = 1;
-            // if(!input){
-            //     showError(ERROR_INVALID_INPUT_FILE);
-            //     return 0;
-            // }
         } else {
             size_t inputFileSize;
             FILE *inputFile;
@@ -253,6 +255,9 @@ void showError(int errorCode){
 	if(errorCode == ERROR_INVALID_PARAMETERS){
 		printf("%s\n","Invalid arguments. Type 'tp0 -h' for help. Program terminated");
 	}
+    if(errorCode == ERROR_NO_TEXT_GIVEN){
+        printf("%s\n", "No text passed to verify");
+    }
 }
 
 Array findCapicuaWords(char** array, long numberOfWords){
@@ -341,15 +346,18 @@ Array getFromStandardInput(){
     initDymaicWord(&auxInput, 0);
     char ch;
     // 0 = standar input, 1 tamanio buffer
-    while(read(0, &ch, 1) > 0){
-        if((ch == 32) || (ch == 10)){
-            char * auxString = (char *)malloc(sizeof(char) * auxInput.size);
-            strncpy(auxString, auxInput.word, auxInput.size);
-            insertArray(&words, auxString);
-            freeDynamicWord(&auxInput);
-            initDymaicWord(&auxInput, 0);
-        } else {
-            insertChar(&auxInput, ch);
+    struct pollfd mypoll = {STDIN_FILENO, POLLIN|POLLPRI};
+    if(poll(&mypoll, 1, 1)){
+        while(read(0, &ch, 1) > 0){
+            if((ch == 32) || (ch == 10)){
+                char * auxString = (char *)malloc(sizeof(char) * auxInput.size);
+                strncpy(auxString, auxInput.word, auxInput.size);
+                insertArray(&words, auxString);
+                freeDynamicWord(&auxInput);
+                initDymaicWord(&auxInput, 0);
+            } else {
+                insertChar(&auxInput, ch);
+            }
         }
     }
     return words;
