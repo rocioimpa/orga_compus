@@ -83,6 +83,8 @@ char * searchArgumentValue(char**, int, char*, char*);
 char* getFromStandardInput();
 char removeDiacritic(char*);
 size_t getFileSize(FILE* file);
+void printArray(Array);
+int isSeparator(int);
 
 
 int main(int argc, char *argv[]){
@@ -126,14 +128,14 @@ int main(int argc, char *argv[]){
 					char aChar;
 					for (index = 0; index < strlen(str); index++){
 						aChar = str[index];
-						if (((aChar > 0) && (aChar < 47)) || ((aChar > 57) && (aChar < 65)) || (aChar >= 123))
+						if (isSeparator(aChar) == 1)
 						{
 							str[index] = '|';
 						}
 					}
 					strcat(text,str);
 				}
-				
+
 				char* word;
 				p = strtok(text,"|");
 				while(p != NULL)
@@ -148,7 +150,7 @@ int main(int argc, char *argv[]){
 				free(text);
 				fclose(inputFile);
 				printf("%s\n", "Words have been saved successfully into an array");
-				
+
 			} else {
 				showError(ERROR_EMPTY_INPUT_FILE);
 				validFile = 0;
@@ -157,17 +159,18 @@ int main(int argc, char *argv[]){
 				showError(ERROR_INVALID_INPUT_FILE);
 				validFile = 0;
 			}
-			
+
 			if(validFile == 1){
 				printf("%s\n", "Going to validate capicua words");
+				//printArray(array);
 				Array result;
 				for(int i = 0; i < array.size; i++){
 					if(wordIsPalindrome(array.array[i])){
 						//insertArray(&result,array.array[i]);
 						printf("%s es PALINDROMO\n",array.array[i]);
 					}
-				}			
-				
+				}
+
 				//result = findCapicuaWords(array.array, array.size); //Adentro de esta funcion da el seg fault. No le gusta cuando hace initArray(&output, 0)
 
 				/*writeOutput(result.array, result.size, output);
@@ -178,6 +181,20 @@ int main(int argc, char *argv[]){
 	           showError(ERROR_INVALID_PARAMETERS);
         }
 	return 0;
+}
+
+int isSeparator(int character){
+  if (((character > 0) && (character < 48)) || ((character > 57) && (character < 65))  || ((character > 90) && (character < 97)) || (character >= 123))
+    return 1;
+  else return 0;
+}
+
+void printArray(Array array){
+  printf("%s\n","Printing array");
+  for (int i = 0; i < array.size; i++) {
+    printf("%s",array.array[i]);
+    printf("%s\n","\n");
+  }
 }
 
 
