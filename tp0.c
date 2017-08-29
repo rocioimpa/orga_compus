@@ -80,7 +80,7 @@ int getWordLength(char*);
 char* convertWordToLowerCase(char*);
 void writeStadarOutput(char**, long);
 char * searchArgumentValue(char**, int, char*, char*);
-char* getFromStandardInput();
+Array getFromStandardInput();
 char removeDiacritic(char*);
 size_t getFileSize(FILE* file);
 
@@ -99,85 +99,87 @@ int main(int argc, char *argv[]){
         char* input = searchArgumentValue(argv, argc, "-i", "--input");
         char* output = searchArgumentValue(argv, argc, "-o", "--output");
 
+        Array array;
         if(!input){
-            input = getFromStandardInput();
-            if(!input){
-                showError(ERROR_INVALID_INPUT_FILE);
-                return 0;
-            }
-        }
-		size_t inputFileSize;
-		FILE *inputFile;
-		char str[BUFFER+1];
-		Array array;
-        initArray(&array, 0);
-		long pos = 0;
-		long numberOfWords = 0;
-		inputFile = fopen(input,"r");
-
-		if (inputFile){
-			inputFileSize = getFileSize(inputFile);
-			if(inputFileSize > 0){
-				char* p;
-				char* text = (char *) malloc(sizeof(char) * inputFileSize + 1);
-				memset(text,'\0', inputFileSize);
-				while(fgets(str, sizeof(str), inputFile)!= NULL)
-				{
-					int index;
-					char aChar;
-					for (index = 0; index < strlen(str); index++){
-						aChar = str[index];
-						if (((aChar > 0) && (aChar < 47)) || ((aChar > 57) && (aChar < 65)) || (aChar >= 123))
-						{
-							str[index] = '|';
-						}
-					}
-					strcat(text,str);
-				}
-
-				char* word;
-				p = strtok(text,"|");
-				while(p != NULL)
-				{
-					word = malloc((strlen(p) + 1)*sizeof(char));
-					memset(word,'\0', strlen(word));
-					strcpy(word, p);
-					insertArray(&array, word);
-					p = strtok(NULL, "|");
-					pos++;
-				}
-				free(text);
-				fclose(inputFile);
-				printf("%s\n", "Words have been saved successfully into an array");
-
-			} else {
-				showError(ERROR_EMPTY_INPUT_FILE);
-				validFile = 0;
-			}
-			} else {
-				showError(ERROR_INVALID_INPUT_FILE);
-				validFile = 0;
-			}
-			if(validFile == 1){
-				printf("%s\n", "Going to validate capicua words");
-				Array result;
-                initArray(&result, 0);
-				for(int i = 0; i < array.size; i++){
-					if(wordIsPalindrome(array.array[i])){
-						insertArray(&result,array.array[i]);
-						// printf("%s es PALINDROMO\n",array.array[i]);
-					}
-				}
-
-				result = findCapicuaWords(array.array, array.size); //Adentro de esta funcion da el seg fault. No le gusta cuando hace initArray(&output, 0)
-
-				writeOutput(result.array, result.size, output);
-				freeDynamicArray(&result);
-                freeDynamicArray(&array);
-			}
+            array = getFromStandardInput();
+            validFile = 1;
+            // if(!input){
+            //     showError(ERROR_INVALID_INPUT_FILE);
+            //     return 0;
+            // }
         } else {
-	           showError(ERROR_INVALID_PARAMETERS);
+            size_t inputFileSize;
+            FILE *inputFile;
+            char str[BUFFER+1];
+            initArray(&array, 0);
+            long pos = 0;
+            long numberOfWords = 0;
+            inputFile = fopen(input,"r");
+
+            if (inputFile){
+                inputFileSize = getFileSize(inputFile);
+                if(inputFileSize > 0){
+                    char* p;
+                    char* text = (char *) malloc(sizeof(char) * inputFileSize + 1);
+                    memset(text,'\0', inputFileSize);
+                    while(fgets(str, sizeof(str), inputFile)!= NULL)
+                    {
+                        int index;
+                        char aChar;
+                        for (index = 0; index < strlen(str); index++){
+                            aChar = str[index];
+                            if (((aChar > 0) && (aChar < 47)) || ((aChar > 57) && (aChar < 65)) || (aChar >= 123))
+                            {
+                                str[index] = '|';
+                            }
+                        }
+                        strcat(text,str);
+                    }
+
+                    char* word;
+                    p = strtok(text,"|");
+                    while(p != NULL)
+                    {
+                        word = malloc((strlen(p) + 1)*sizeof(char));
+                        memset(word,'\0', strlen(word));
+                        strcpy(word, p);
+                        insertArray(&array, word);
+                        p = strtok(NULL, "|");
+                        pos++;
+                    }
+                    free(text);
+                    fclose(inputFile);
+                    printf("%s\n", "Words have been saved successfully into an array");
+
+                } else {
+                    showError(ERROR_EMPTY_INPUT_FILE);
+                    validFile = 0;
+                }
+                } else {
+                    showError(ERROR_INVALID_INPUT_FILE);
+                    validFile = 0;
+                }
         }
+
+		if(validFile == 1){
+			printf("%s\n", "Going to validate capicua words");
+			Array result;
+            initArray(&result, 0);
+			for(int i = 0; i < array.size; i++){
+				if(wordIsPalindrome(array.array[i])){
+					insertArray(&result,array.array[i]);
+				}
+			}
+
+			result = findCapicuaWords(array.array, array.size);
+
+			writeOutput(result.array, result.size, output);
+			freeDynamicArray(&result);
+            freeDynamicArray(&array);
+		}
+    } else {
+       showError(ERROR_INVALID_PARAMETERS);
+    }
 	return 0;
 }
 
@@ -332,17 +334,25 @@ char* searchArgumentValue(char** argv, int arg, char* arg1, char* arg2){
     return NULL;
 }
 
-char* getFromStandardInput(){
+Array getFromStandardInput(){
     DynamicWord auxInput;
+    Array words;
+    initArray(&words, 0);
     initDymaicWord(&auxInput, 0);
     char ch;
     // 0 = standar input, 1 tamanio buffer
     while(read(0, &ch, 1) > 0){
-        if(ch != 10){
+        if((ch == 32) || (ch == 10)){
+            char * auxString = (char *)malloc(sizeof(char) * auxInput.size);
+            strncpy(auxString, auxInput.word, auxInput.size);
+            insertArray(&words, auxString);
+            freeDynamicWord(&auxInput);
+            initDymaicWord(&auxInput, 0);
+        } else {
             insertChar(&auxInput, ch);
         }
     }
-    return auxInput.word;
+    return words;
 }
 
 
