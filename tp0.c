@@ -268,16 +268,16 @@ Array findCapicuaWords(char** array, long numberOfWords){
 int wordIsPalindrome(char * word){
 	int numberOfLetters;
 	numberOfLetters = getWordLength(word);
-    
-    char* lowerCaseWord = convertWordToLowerCase(word);
-    for(int i = 0; i < numberOfLetters; i++){
-		if(lowerCaseWord[i] != lowerCaseWord[numberOfLetters - i - 1]){
-			return 0;
-		}
-	}
+
+    //char* lowerCaseWord = convertWordToLowerCase(word);
+    //for(int i = 0; i < numberOfLetters; i++){
+		//if(lowerCaseWord[i] != lowerCaseWord[numberOfLetters - i - 1]){
+			//return 0;
+		//}
+	//}
 
     for(int i = 0; i < numberOfLetters; i++){
-		if(word[i] != word[numberOfLetters - i - 1]){
+		if(tolower(word[i]) != tolower(word[numberOfLetters - i - 1])){
 			return 0;
 		}
 	}
