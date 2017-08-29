@@ -82,6 +82,7 @@ void writeStadarOutput(char**, long);
 char * searchArgumentValue(char**, int, char*, char*);
 char* getFromStandardInput();
 char removeDiacritic(char*);
+size_t getFileSize(FILE* file);
 
 
 int main(int argc, char *argv[]){
@@ -105,7 +106,7 @@ int main(int argc, char *argv[]){
                 return 0;
             }
         }
-
+		size_t inputFileSize;
 		FILE *inputFile;
 		char str[BUFFER+1];
 		Array array;
@@ -114,45 +115,25 @@ int main(int argc, char *argv[]){
 		inputFile = fopen(input,"r");
 
 		if (inputFile){
-
-			fseek(inputFile, 0L, SEEK_END);
-			long inputFileSize = ftell(inputFile);
+			inputFileSize = getFileSize(inputFile);
 			if(inputFileSize > 0){
-				fseek(inputFile, 0L, SEEK_SET);
-                initArray(&array, 0);
 				char* p;
 				char* text = (char *) malloc(sizeof(char) * inputFileSize + 1);
 				memset(text,'\0', inputFileSize);
-
 				while(fgets(str, sizeof(str), inputFile)!= NULL)
 				{
-					char aWord[BUFFER+1];
-					memset(aWord,'\0', BUFFER);
-					char *temp = malloc(sizeof(char)*BUFFER+1);
-					memset(temp,'\0', BUFFER);
 					int index;
-					int j;
 					char aChar;
-					for (index = 0, j = 0; index < strlen(str); index++){
-							aChar = str[index];
-							if (aChar != 39){
-								temp[j] = aChar;
-	                            j++;
-							}
-					}
-					temp[j] = '\0';
-					for (index = 0; index < strlen(temp); index++)
-					{
-						aChar = temp[index];
-						if (((aChar > 0) && (aChar < 47)) || (aChar > 57) && (aChar < 65) || (aChar >= 123))
+					for (index = 0; index < strlen(str); index++){
+						aChar = str[index];
+						if (((aChar > 0) && (aChar < 47)) || ((aChar > 57) && (aChar < 65)) || (aChar >= 123))
 						{
-							temp[index] = '|';
+							str[index] = '|';
 						}
 					}
-					strcpy(aWord, temp);
-					free(temp);
-					strcat(text, aWord);
+					strcat(text,str);
 				}
+				
 				char* word;
 				p = strtok(text,"|");
 				while(p != NULL)
@@ -167,6 +148,7 @@ int main(int argc, char *argv[]){
 				free(text);
 				fclose(inputFile);
 				printf("%s\n", "Words have been saved successfully into an array");
+				
 			} else {
 				showError(ERROR_EMPTY_INPUT_FILE);
 				validFile = 0;
@@ -175,14 +157,22 @@ int main(int argc, char *argv[]){
 				showError(ERROR_INVALID_INPUT_FILE);
 				validFile = 0;
 			}
+			
 			if(validFile == 1){
 				printf("%s\n", "Going to validate capicua words");
 				Array result;
-				result = findCapicuaWords(array.array, array.size);
+				for(int i = 0; i < array.size; i++){
+					if(wordIsPalindrome(array.array[i])){
+						//insertArray(&result,array.array[i]);
+						printf("%s es PALINDROMO\n",array.array[i]);
+					}
+				}			
+				
+				//result = findCapicuaWords(array.array, array.size); //Adentro de esta funcion da el seg fault. No le gusta cuando hace initArray(&output, 0)
 
-				writeOutput(result.array, result.size, output);
+				/*writeOutput(result.array, result.size, output);
 				freeDynamicArray(&result);
-                freeDynamicArray(&array);
+                freeDynamicArray(&array);                */
 			}
         } else {
 	           showError(ERROR_INVALID_PARAMETERS);
@@ -264,13 +254,13 @@ void showError(int errorCode){
 
 Array findCapicuaWords(char** array, long numberOfWords){
   Array output;
-  initArray(&output, 0);
-
+  //initArray(&output, 0); //Esta linea no le gusta
+  /*
   for(int i = 0; i < numberOfWords; i++){
     if(wordIsPalindrome(array[i])){
       insertArray(&output, array[i]);
     }
-  }
+  }*/
   return output;
 }
 
@@ -298,10 +288,11 @@ int wordIsPalindrome(char * word){
 	return 1;
 }
 
+
 char* convertWordToLowerCase(char*originalWord){
   char* lowerCaseWord;
   for(int i = 0; originalWord[i]; i++){
-    printf("%c\n", originalWord[i]);
+    //printf("%c\n", originalWord[i]);
     lowerCaseWord[i] = tolower(originalWord[i]);
     //lowerCaseWord[i] = removeDiacritic(lowerCaseWord[i]);
   }
@@ -355,4 +346,16 @@ char* getFromStandardInput(){
         }
     }
     return auxInput.word;
+}
+
+
+
+
+size_t getFileSize(FILE* file)
+{
+	size_t pos = ftell(file);    // Current position
+	fseek(file, 0, SEEK_END);    // Go to end
+	size_t length = ftell(file); // read the position which is the size
+	fseek(file, pos, SEEK_SET);  // restore original position
+	return length;
 }
