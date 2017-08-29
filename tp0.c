@@ -272,19 +272,12 @@ int wordIsPalindrome(char * word){
         return 0;
     }
     
-    char* lowerCaseWord = convertWordToLowerCase(word);
+   //char* lowerCaseWord = convertWordToLowerCase(word);
     for(int i = 0; i < numberOfLetters; i++){
-		if(lowerCaseWord[i] != lowerCaseWord[numberOfLetters - i - 1]){
+		if(tolower(word[i]) != tolower(word[numberOfLetters - i - 1])){
 			return 0;
 		}
 	}
-
-    for(int i = 0; i < numberOfLetters; i++){
-		if(word[i] != word[numberOfLetters - i - 1]){
-			return 0;
-		}
-	}
-
 	return 1;
 }
 
