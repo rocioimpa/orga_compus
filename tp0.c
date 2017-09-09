@@ -93,6 +93,7 @@ char * searchArgumentValue(char**, int, char*, char*);
 Array getFromStandardInput();
 char removeDiacritic(char*);
 size_t getFileSize(FILE* file);
+int isSeparator(int character);
 
 
 int main(int argc, char *argv[]){
@@ -138,7 +139,8 @@ int main(int argc, char *argv[]){
                         char aChar;
                         for (index = 0; index < strlen(str); index++){
                             aChar = str[index];
-                            if (((aChar > 0) && (aChar < 45)) || ((aChar > 45) && (aChar <  47)) || ((aChar > 57) && (aChar < 65)) || (aChar >= 123))
+							//printf("%d",aChar);
+                            if (isSeparator(aChar) == 1)
                             {
                                 str[index] = '|';
                             }
@@ -341,7 +343,12 @@ Array getFromStandardInput(){
     return words;
 }
 
-
+int isSeparator(int character){
+	if (((character > 0) && (character < 45)) || ((character > 45) && (character < 48)) || ((character > 57) && (character < 65))  || ((character > 90) && (character < 95)) || ((character > 95) && (character < 97)) || (character >= 123))
+		return 1;
+	else
+		return 0;
+ }
 
 
 size_t getFileSize(FILE* file)
