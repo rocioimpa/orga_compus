@@ -19,8 +19,16 @@ typedef struct {
     size_t size;
 } Array;
 
+void* Malloc(size_t size){
+	void* ptr = malloc(size);
+	if (!ptr){
+		fprintf(stderr, "Falló malloc. Devolvió NULL.");
+	}
+	return ptr;
+}
+
 void initArray(Array * a, size_t initialSize) {
-    a->array = (char **)malloc(initialSize * sizeof(char *));
+    a->array = (char **)Malloc(initialSize * sizeof(char *));
     a->used = 0;
     a->size = initialSize;
 }
@@ -48,7 +56,7 @@ typedef struct {
 } DynamicWord;
 
 void initDymaicWord(DynamicWord * a, size_t initialSize) {
-    a->word = (char *)malloc(initialSize * sizeof(char));
+    a->word = (char *)Malloc(initialSize * sizeof(char));
     a->used = 0;
     a->size = initialSize;
 }
@@ -96,7 +104,7 @@ int main(int argc, char *argv[]){
 		} else {
 			showError(ERROR_INVALID_PARAMETERS);
 		}
-	} else if (3 <= argc <= 5){
+	} else if (3 <= argc && argc <= 5){
 		int validFile = 1;
         char* input = searchArgumentValue(argv, argc, "-i", "--input");
         char* output = searchArgumentValue(argv, argc, "-o", "--output");
@@ -115,22 +123,22 @@ int main(int argc, char *argv[]){
             char str[BUFFER+1];
             initArray(&array, 0);
             long pos = 0;
-            long numberOfWords = 0;
+            //long numberOfWords = 0;
             inputFile = fopen(input,"r");
 
             if (inputFile){
                 inputFileSize = getFileSize(inputFile);
                 if(inputFileSize > 0){
                     char* p;
-                    char* text = (char *) malloc(sizeof(char) * inputFileSize + 1);
+                    char* text = (char *) Malloc(sizeof(char) * inputFileSize + 1);
                     memset(text,'\0', inputFileSize);
                     while(fgets(str, sizeof(str), inputFile)!= NULL)
                     {
-                        int index;
+                        size_t index;
                         char aChar;
                         for (index = 0; index < strlen(str); index++){
                             aChar = str[index];
-                            if (((aChar > 0) && (aChar < 47)) || ((aChar > 57) && (aChar < 65)) || (aChar >= 123))
+                            if (((aChar > 0) && (aChar < 45)) || ((aChar > 45) && (aChar <  47)) || ((aChar > 57) && (aChar < 65)) || (aChar >= 123))
                             {
                                 str[index] = '|';
                             }
@@ -142,7 +150,7 @@ int main(int argc, char *argv[]){
                     p = strtok(text,"|");
                     while(p != NULL)
                     {
-                        word = malloc((strlen(p) + 1)*sizeof(char));
+                        word = Malloc((strlen(p) + 1)*sizeof(char));
                         memset(word,'\0', strlen(word));
                         strcpy(word, p);
                         insertArray(&array, word);
@@ -151,7 +159,7 @@ int main(int argc, char *argv[]){
                     }
                     free(text);
                     fclose(inputFile);
-                    printf("%s\n", "Words have been saved successfully into an array");
+                    //printf("%s\n", "Words have been saved successfully into an array");
 
                 } else {
                     showError(ERROR_EMPTY_INPUT_FILE);
@@ -164,10 +172,10 @@ int main(int argc, char *argv[]){
         }
 
 		if(validFile == 1){
-			printf("%s\n", "Going to validate capicua words");
+			//printf("%s\n", "Going to validate capicua words");
 			Array result;
             initArray(&result, 0);
-			for(int i = 0; i < array.size; i++){
+			for(size_t i = 0; i < array.size; i++){
 				if(wordIsPalindrome(array.array[i])){
 					insertArray(&result,array.array[i]);
 				}
@@ -187,7 +195,7 @@ int main(int argc, char *argv[]){
 
 
 void writeOutput(char** array, long pos, char* fileName){
-    printf("%s\n", "Writing output");
+    //printf("%s\n", "Writing output");
     if(fileName){
         FILE *outputFile = fopen(fileName,"w+");
 
@@ -206,7 +214,7 @@ void writeOutput(char** array, long pos, char* fileName){
     } else {
         writeStadarOutput(array, pos);
     }
-    printf("%s\n", "Sorting finished successfully. Execution finished.");
+    //printf("%s\n", "Sorting finished successfully. Execution finished.");
 }
 
 void writeStadarOutput(char ** result, long resultLength){
@@ -244,19 +252,19 @@ void showVersion(){
 
 void showError(int errorCode){
 	if(errorCode == ERROR_INVALID_INPUT_FILE){
-		printf("%s\n","Invalid input file. Type 'tp0 -h' for help. Program terminated");
+		fprintf(stderr,"%s\n","Invalid input file. Type 'tp0 -h' for help. Program terminated");
 	}
 	if(errorCode == ERROR_EMPTY_INPUT_FILE){
-		printf("%s\n", "Input file is empty. Type 'tp0 -h' for help. Program terminated");
+		fprintf(stderr,"%s\n", "Input file is empty. Type 'tp0 -h' for help. Program terminated");
 	}
 	if(errorCode == ERROR_INVALID_OUTPUT_FILE){
-		printf("%s\n", "Invalid output file, check path. Type 'tp0 -h' for help. Program terminated");
+		fprintf(stderr,"%s\n", "Invalid output file, check path. Type 'tp0 -h' for help. Program terminated");
 	}
 	if(errorCode == ERROR_INVALID_PARAMETERS){
-		printf("%s\n","Invalid arguments. Type 'tp0 -h' for help. Program terminated");
+		fprintf(stderr,"%s\n","Invalid arguments. Type 'tp0 -h' for help. Program terminated");
 	}
     if(errorCode == ERROR_NO_TEXT_GIVEN){
-        printf("%s\n", "No text passed to verify");
+        fprintf(stderr,"%s\n", "No text passed to verify");
     }
 }
 
@@ -275,14 +283,6 @@ Array findCapicuaWords(char** array, long numberOfWords){
 int wordIsPalindrome(char * word){
 	int numberOfLetters;
 	numberOfLetters = getWordLength(word);
-
-    //char* lowerCaseWord = convertWordToLowerCase(word);
-    //for(int i = 0; i < numberOfLetters; i++){
-		//if(lowerCaseWord[i] != lowerCaseWord[numberOfLetters - i - 1]){
-			//return 0;
-		//}
-	//}
-
     for(int i = 0; i < numberOfLetters; i++){
 		if(tolower(word[i]) != tolower(word[numberOfLetters - i - 1])){
 			return 0;
@@ -293,28 +293,6 @@ int wordIsPalindrome(char * word){
 }
 
 
-char* convertWordToLowerCase(char*originalWord){
-  char* lowerCaseWord;
-  for(int i = 0; originalWord[i]; i++){
-    //printf("%c\n", originalWord[i]);
-    lowerCaseWord[i] = tolower(originalWord[i]);
-    //lowerCaseWord[i] = removeDiacritic(lowerCaseWord[i]);
-  }
-  return lowerCaseWord;
-}
-
-//char removeDiacritic(char* letter){
-//  printf("%s\n", letter);
-//  switch ((char)letter) {
-//    case 'à': letter = 'a'; break;
-//    case 'è': letter = 'e'; break;
-//    case 'é': letter = 'e'; break;
-//    case 'ì': letter = 'i'; break;
-//    case 'ò': letter = 'o'; break;
-//    case 'ù': letter = 'u'; break;
-//  }
-//  return letter;
-//}
 
 int getWordLength(char * word){
 	int i = 0;
@@ -350,7 +328,7 @@ Array getFromStandardInput(){
     if(poll(&mypoll, 1, 1)){
         while(read(0, &ch, 1) > 0){
             if((ch == 32) || (ch == 10)){
-                char * auxString = (char *)malloc(sizeof(char) * auxInput.size);
+                char * auxString = (char *)Malloc(sizeof(char) * auxInput.size);
                 strncpy(auxString, auxInput.word, auxInput.size);
                 insertArray(&words, auxString);
                 freeDynamicWord(&auxInput);
