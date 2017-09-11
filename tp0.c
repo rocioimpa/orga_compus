@@ -83,7 +83,7 @@ typedef struct {
     size_t size;
 } DynamicWord;
 
-int initDymaicWord(DynamicWord * a, size_t initialSize) {
+int initDynamicWord(DynamicWord * a, size_t initialSize) {
     a->word = (char *)Malloc(initialSize * sizeof(char));
     if (a->word == NULL){
 		return -1;
@@ -116,22 +116,22 @@ void freeDynamicWord(DynamicWord *a) {
 
 
 int writeOutput(char**,long,char*);
+void writeStandardOutput(char**, long);
 void freeArray(char**,long);
 void showHelp();
 void showVersion();
 void showError(int);
-Array findCapicuaWords(char**, long);
 int wordIsPalindrome(char*);
 int getWordLength(char*);
 char* convertWordToLowerCase(char*);
-void writeStadarOutput(char**, long);
 char * searchArgumentValue(char**, int, char*, char*);
 int validateArgumentAppeareance(char**, int, char*, char*);
 Array getFromStandardInput();
-char removeDiacritic(char*);
+Array getWordsFromFile(FILE* file);
 size_t getFileSize(FILE* file);
-int isSeparator(int character);
-
+Array arrayOfWordsCorrectlyInitialized(int, Array);
+DynamicWord wordCorrectlyInitialized(int, DynamicWord);
+Array wordCorrectlyInserted(int, DynamicWord, Array);
 
 int main(int argc, char *argv[]){
 
@@ -147,7 +147,6 @@ int main(int argc, char *argv[]){
 			showHelp();
             return 0;
 		}
-
         input = searchArgumentValue(argv, argc, "-i", "--input");
         output = searchArgumentValue(argv, argc, "-o", "--output");
     }
@@ -167,83 +166,30 @@ int main(int argc, char *argv[]){
     } else {
         size_t inputFileSize;
         FILE *inputFile;
-        char str[BUFFER+1];
         int arrayOk = initArray(&array, 0);
-        if (arrayOk < 0){
-            //Error del malloc del array. No hay memoria para liberar asique cancelo la ejecución.
+        if (arrayOk < 0){ //Error del malloc del array. No hay memoria para liberar asique cancelo la ejecución.
             return 1;
         }
-        long pos = 0;
-        //long numberOfWords = 0;
         inputFile = fopen(input,"r");
-        if (inputFile == NULL){
-            //Agregada corrección al manejo de errores. Ahora si da error revisa el errno para obtener el mensaje.
+        if (inputFile == NULL){ //Agregada corrección al manejo de errores. Ahora si da error revisa el errno para obtener el mensaje.
             fprintf(stderr, "Error al intentar abrir el archivo INPUT: %s.\n", strerror(errno));
             validFile = 0;
         } else {
             inputFileSize = getFileSize(inputFile);
             if (inputFileSize < 0){
                 fprintf(stderr, "Error al intentar obtener el size del archivo INPUT: %s.\n", strerror(errno));
-            }
-            else{
-                char* p;
-                char* text = (char *) Malloc(sizeof(char) * inputFileSize + 1);
-                if (text == NULL){
-                    return 1; //Si falló el Malloc, ya se imprimió por stderr el error y debo interrumpir la ejecución.
-                }
-                memset(text,'\0', inputFileSize);
-                while(fgets(str, sizeof(str), inputFile)!= NULL)
-                {
-                    size_t index;
-                    char aChar;
-                    for (index = 0; index < strlen(str); index++){
-                        aChar = str[index];
-                        //printf("%c",aChar);
-                        if (isSeparator(aChar) == 1)
-                        {
-                            str[index] = '|';
-                        }
-                    }
-                    strcat(text,str);
-                }
+            } else {
+                array = getWordsFromFile(inputFile);
 
-                char* word;
-                p = strtok(text,"|");
-                while(p != NULL)
-                {
-                    word = Malloc((strlen(p) + 1)*sizeof(char));
-                    if (word == NULL)
-                    {
-                        freeDynamicArray(&array);
-                        free(text); //Si falló el Malloc, ya se imprimió por stderr el error, debo liberar la memoria pedida anteriormente e interrumpir la ejecución.
-                        return 1;
-                    }
-                    memset(word,'\0', strlen(p) + 1);
-                    strcpy(word, p);
-                    int insertOk = insertArray(&array, word);
-                    if (insertOk < 0){
-                        //Error al insertar, causado por realloc.
-                        freeDynamicArray(&array); //Libero la memoria pedida para el array.
-                        free(text); //Libero la memoria pedida para el texto.
-                        return 1; //Cancelo la ejecución.
-                    }
-                    p = strtok(NULL, "|");
-                    pos++;
-                }
-                free(text);
                 int closeOk = fclose(inputFile);
-                if (closeOk == EOF){
-                    //Agregada corrección al manejo de errores. Ahora si da error revisa el errno para obtener el mensaje.
+                if (closeOk == EOF){ //Agregada corrección al manejo de errores. Ahora si da error revisa el errno para obtener el mensaje.
                     fprintf(stderr, "Error al intentar cerrar el archivo INPUT: %s.\n", strerror(errno));
                 }
-                //printf("%s\n", "Words have been saved successfully into an array");
-
             }
         }
     }
 
     if(validFile == 1){
-        //printf("%s\n", "Going to validate capicua words");
         Array result;
         int arrayOk = initArray(&result, 0);
         if (arrayOk < 0){
@@ -303,12 +249,12 @@ int writeOutput(char** array, long pos, char* fileName){
 			}
         }
     } else {
-        writeStadarOutput(array, pos);
+        writeStandardOutput(array, pos);
     }
     return 0;
 }
 
-void writeStadarOutput(char ** result, long resultLength){
+void writeStandardOutput(char ** result, long resultLength){
     for(int i = 0; i < resultLength; i++){
         printf("%s\n", result[i]);
     }
@@ -359,18 +305,6 @@ void showError(int errorCode){
     }
 }
 
-Array findCapicuaWords(char** array, long numberOfWords){
-  Array output;
-  initArray(&output, 0);
-
-  for(int i = 0; i < numberOfWords; i++){
-    if(wordIsPalindrome(array[i])){
-      insertArray(&output, array[i]);
-    }
-  }
-  return output;
-}
-
 int wordIsPalindrome(char * word){
 	int numberOfLetters;
 	numberOfLetters = getWordLength(word);
@@ -382,8 +316,6 @@ int wordIsPalindrome(char * word){
 
 	return 1;
 }
-
-
 
 int getWordLength(char * word){
 	int i = 0;
@@ -417,6 +349,63 @@ char* searchArgumentValue(char** argv, int arg, char* arg1, char* arg2){
     return NULL;
 }
 
+Array arrayOfWordsCorrectlyInitialized(int status, Array arrayOfWords){
+  if(status < 0){
+    return arrayOfWords;
+  }
+}
+
+DynamicWord wordCorrectlyInitialized(int status, DynamicWord word){
+  if(status < 0){
+    freeDynamicWord(&word);
+    word.size = -1;
+    return word;
+  }
+}
+
+Array wordCorrectlyInserted(int status, DynamicWord word, Array arrayOfWords){
+  if(status < 0){
+    freeDynamicArray(&arrayOfWords);
+    freeDynamicWord(&word);
+    arrayOfWords.size = -1;
+    return arrayOfWords;
+  }
+}
+
+Array getWordsFromFile(FILE* inputFile){
+  DynamicWord currentWord;
+  Array storedWords;
+  int arrayOk = initArray(&storedWords,0);
+  arrayOfWordsCorrectlyInitialized(arrayOk,storedWords);
+
+  int wordOk = initDynamicWord(&currentWord,0);
+  wordCorrectlyInitialized(wordOk,currentWord);
+
+  int currentCharacter;
+
+  while ((currentCharacter = fgetc(inputFile)) != EOF){
+    if(currentCharacter < 0){
+      fprintf(stderr,"Error al leer del archivo: %s.\n",strerror(errno));
+      freeDynamicArray(&storedWords);
+      freeDynamicWord(&currentWord);
+      storedWords.size = -1;
+      return storedWords;
+    }
+    if((currentCharacter == 32) || (currentCharacter == 10)){
+        char * aWord = (char *)Malloc(sizeof(char) * currentWord.size);
+        strncpy(aWord, currentWord.word, currentWord.size);
+        insertArray(&storedWords, aWord);
+        freeDynamicWord(&currentWord);
+        int wordOk = initDynamicWord(&currentWord, 0);
+        wordCorrectlyInitialized(wordOk,currentWord);
+    } else {
+        int insertionOk = insertChar(&currentWord, currentCharacter);
+        wordCorrectlyInserted(insertionOk,currentWord,storedWords);
+    }
+  }
+  return storedWords;
+}
+
 Array getFromStandardInput(){
     DynamicWord auxInput;
     Array words;
@@ -425,7 +414,7 @@ Array getFromStandardInput(){
 		//Falló el inicio del Array.
 		return words; //Devuelvo words con size = -1
 	}
-    int wordOk = initDymaicWord(&auxInput, 0);
+    int wordOk = initDynamicWord(&auxInput, 0);
     if (wordOk < 0){
 		//Falló el dynamicword
 		freeDynamicArray(&words);
@@ -442,7 +431,7 @@ Array getFromStandardInput(){
                 strncpy(auxString, auxInput.word, auxInput.size);
                 insertArray(&words, auxString);
                 freeDynamicWord(&auxInput);
-                int wordOk = initDymaicWord(&auxInput, 0);
+                int wordOk = initDynamicWord(&auxInput, 0);
 				if (wordOk < 0){
 					//Falló el dynamicword
 					freeDynamicArray(&words);
@@ -471,14 +460,6 @@ Array getFromStandardInput(){
     }
     return words;
 }
-
-int isSeparator(int character){
-	if (((character > 0) && (character < 45)) || ((character > 45) && (character < 48)) || ((character > 57) && (character < 65))  || ((character > 90) && (character < 95)) || ((character > 95) && (character < 97)) || (character >= 123))
-		return 1;
-	else
-		return 0;
- }
-
 
 size_t getFileSize(FILE* file)
 {
