@@ -126,6 +126,7 @@ int getWordLength(char*);
 char* convertWordToLowerCase(char*);
 void writeStadarOutput(char**, long);
 char * searchArgumentValue(char**, int, char*, char*);
+int validateArgumentAppeareance(char**, int, char*, char*);
 Array getFromStandardInput();
 char removeDiacritic(char*);
 size_t getFileSize(FILE* file);
@@ -133,133 +134,135 @@ int isSeparator(int character);
 
 
 int main(int argc, char *argv[]){
-	if (argc == 2){
-		if (((strcmp(argv[1], "-V") == 0)) || ((strcmp(argv[1], "--version") == 0))){
+
+    char* input = NULL;
+    char* output = NULL;
+    int validFile = 1;
+
+    if(argc > 1){
+        if (validateArgumentAppeareance(argv, argc, "-v", "--version")){
 			showVersion();
-		} else if (((strcmp(argv[1], "-h") == 0)) || ((strcmp(argv[1], "--help") == 0))){
+            return 0;
+		} else if (validateArgumentAppeareance(argv, argc, "-h", "--help")){
 			showHelp();
-		} else {
-			showError(ERROR_INVALID_PARAMETERS);
+            return 0;
 		}
-	} else if (3 <= argc && argc <= 5){
-		int validFile = 1;
-        char* input = searchArgumentValue(argv, argc, "-i", "--input");
-        char* output = searchArgumentValue(argv, argc, "-o", "--output");
 
-        Array array;
-        if(!input){
-            array = getFromStandardInput();
-            if (array.size == -1){
-				//Ocurrió un error al recibir por stdin, debo cancelar la ejecución
-				return -1;
-			}
-            if(array.size == 0){
-                showError(ERROR_NO_TEXT_GIVEN);
-                return 0;
-            }
-            validFile = 1;
-        } else {
-            size_t inputFileSize;
-            FILE *inputFile;
-            char str[BUFFER+1];
-            int arrayOk = initArray(&array, 0);
-            if (arrayOk < 0){
-				//Error del malloc del array. No hay memoria para liberar asique cancelo la ejecución.
-				return 1;
-			}
-            long pos = 0;
-            //long numberOfWords = 0;
-            inputFile = fopen(input,"r");
-			if (inputFile == NULL)
-			{
-				//Agregada corrección al manejo de errores. Ahora si da error revisa el errno para obtener el mensaje.
-				fprintf(stderr, "Error al intentar abrir el archivo INPUT: %s.\n", strerror(errno));	
-				validFile = 0;			
-			}
-            else
-            {
-                inputFileSize = getFileSize(inputFile);
-                if (inputFileSize < 0){
-					fprintf(stderr, "Error al intentar obtener el size del archivo INPUT: %s.\n", strerror(errno));						
-				}
-				else{
-                    char* p;
-                    char* text = (char *) Malloc(sizeof(char) * inputFileSize + 1);
-                    if (text == NULL){
-						return 1; //Si falló el Malloc, ya se imprimió por stderr el error y debo interrumpir la ejecución.
-					}
-                    memset(text,'\0', inputFileSize);
-                    while(fgets(str, sizeof(str), inputFile)!= NULL)
-                    {
-                        size_t index;
-                        char aChar;
-                        for (index = 0; index < strlen(str); index++){
-                            aChar = str[index];
-							//printf("%c",aChar);
-                            if (isSeparator(aChar) == 1)
-                            {
-                                str[index] = '|';
-                            }
-                        }
-                        strcat(text,str);
-                    }
-
-                    char* word;
-                    p = strtok(text,"|");
-                    while(p != NULL)
-                    {
-                        word = Malloc((strlen(p) + 1)*sizeof(char));
-                        if (word == NULL)
-                        {
-							freeDynamicArray(&array);
-							free(text); //Si falló el Malloc, ya se imprimió por stderr el error, debo liberar la memoria pedida anteriormente e interrumpir la ejecución.
-							return 1; 
-						}
-                        memset(word,'\0', strlen(p) + 1);
-                        strcpy(word, p);
-                        int insertOk = insertArray(&array, word);
-                        if (insertOk < 0){
-							//Error al insertar, causado por realloc.
-							freeDynamicArray(&array); //Libero la memoria pedida para el array.
-							free(text); //Libero la memoria pedida para el texto.
-							return 1; //Cancelo la ejecución.
-						}
-                        p = strtok(NULL, "|");
-                        pos++;
-                    }
-                    free(text);
-                    int closeOk = fclose(inputFile);
-                    if (closeOk == EOF){				
-						//Agregada corrección al manejo de errores. Ahora si da error revisa el errno para obtener el mensaje.
-						fprintf(stderr, "Error al intentar cerrar el archivo INPUT: %s.\n", strerror(errno));
-					}
-                    //printf("%s\n", "Words have been saved successfully into an array");
-
-                }
-			}
-        }
-
-		if(validFile == 1){
-			//printf("%s\n", "Going to validate capicua words");
-			Array result;
-            int arrayOk = initArray(&result, 0);
-            if (arrayOk < 0){		
-				freeDynamicArray(&array);
-				return -1;
-			}
-			for(size_t i = 0; i < array.size; i++){
-				if(wordIsPalindrome(array.array[i])){
-					insertArray(&result,array.array[i]);
-				}
-			}
-			writeOutput(result.array, result.size, output);
-			freeDynamicArrayResultado(&result);
-            freeDynamicArray(&array);
-		}
-    } else {
-       showError(ERROR_INVALID_PARAMETERS);
+        input = searchArgumentValue(argv, argc, "-i", "--input");
+        output = searchArgumentValue(argv, argc, "-o", "--output");
     }
-	return 0;
+
+    Array array;
+    if(!input){
+        array = getFromStandardInput();
+        if (array.size == -1){
+            //Ocurrió un error al recibir por stdin, debo cancelar la ejecución
+            return -1;
+        }
+        if(array.size == 0){
+            showError(ERROR_NO_TEXT_GIVEN);
+            return 0;
+        }
+        validFile = 1;
+    } else {
+        size_t inputFileSize;
+        FILE *inputFile;
+        char str[BUFFER+1];
+        int arrayOk = initArray(&array, 0);
+        if (arrayOk < 0){
+            //Error del malloc del array. No hay memoria para liberar asique cancelo la ejecución.
+            return 1;
+        }
+        long pos = 0;
+        //long numberOfWords = 0;
+        inputFile = fopen(input,"r");
+        if (inputFile == NULL){
+            //Agregada corrección al manejo de errores. Ahora si da error revisa el errno para obtener el mensaje.
+            fprintf(stderr, "Error al intentar abrir el archivo INPUT: %s.\n", strerror(errno));
+            validFile = 0;
+        } else {
+            inputFileSize = getFileSize(inputFile);
+            if (inputFileSize < 0){
+                fprintf(stderr, "Error al intentar obtener el size del archivo INPUT: %s.\n", strerror(errno));
+            }
+            else{
+                char* p;
+                char* text = (char *) Malloc(sizeof(char) * inputFileSize + 1);
+                if (text == NULL){
+                    return 1; //Si falló el Malloc, ya se imprimió por stderr el error y debo interrumpir la ejecución.
+                }
+                memset(text,'\0', inputFileSize);
+                while(fgets(str, sizeof(str), inputFile)!= NULL)
+                {
+                    size_t index;
+                    char aChar;
+                    for (index = 0; index < strlen(str); index++){
+                        aChar = str[index];
+                        //printf("%c",aChar);
+                        if (isSeparator(aChar) == 1)
+                        {
+                            str[index] = '|';
+                        }
+                    }
+                    strcat(text,str);
+                }
+
+                char* word;
+                p = strtok(text,"|");
+                while(p != NULL)
+                {
+                    word = Malloc((strlen(p) + 1)*sizeof(char));
+                    if (word == NULL)
+                    {
+                        freeDynamicArray(&array);
+                        free(text); //Si falló el Malloc, ya se imprimió por stderr el error, debo liberar la memoria pedida anteriormente e interrumpir la ejecución.
+                        return 1;
+                    }
+                    memset(word,'\0', strlen(p) + 1);
+                    strcpy(word, p);
+                    int insertOk = insertArray(&array, word);
+                    if (insertOk < 0){
+                        //Error al insertar, causado por realloc.
+                        freeDynamicArray(&array); //Libero la memoria pedida para el array.
+                        free(text); //Libero la memoria pedida para el texto.
+                        return 1; //Cancelo la ejecución.
+                    }
+                    p = strtok(NULL, "|");
+                    pos++;
+                }
+                free(text);
+                int closeOk = fclose(inputFile);
+                if (closeOk == EOF){
+                    //Agregada corrección al manejo de errores. Ahora si da error revisa el errno para obtener el mensaje.
+                    fprintf(stderr, "Error al intentar cerrar el archivo INPUT: %s.\n", strerror(errno));
+                }
+                //printf("%s\n", "Words have been saved successfully into an array");
+
+            }
+        }
+    }
+
+    if(validFile == 1){
+        //printf("%s\n", "Going to validate capicua words");
+        Array result;
+        int arrayOk = initArray(&result, 0);
+        if (arrayOk < 0){
+            freeDynamicArray(&array);
+            return -1;
+        }
+        for(size_t i = 0; i < array.size; i++){
+            if(wordIsPalindrome(array.array[i])){
+                insertArray(&result,array.array[i]);
+            }
+        }
+        writeOutput(result.array, result.size, output);
+        freeDynamicArrayResultado(&result);
+        freeDynamicArray(&array);
+    } else {
+        showError(ERROR_INVALID_PARAMETERS);
+    }
+
+    return 0;
 }
 
 
@@ -278,19 +281,19 @@ int writeOutput(char** array, long pos, char* fileName){
             {
                 int bytesWritten = fputs(array[i], outputFile);
                 if (bytesWritten < 0){
-					fprintf(stderr, "Error al intentar escribir en el archivo OUTPUT: %s.\n", strerror(errno));	
+					fprintf(stderr, "Error al intentar escribir en el archivo OUTPUT: %s.\n", strerror(errno));
 					error = 1;
 					break;
 				}
                 bytesWritten = fputs("\n", outputFile);
                 if (bytesWritten < 0){
-					fprintf(stderr, "Error al intentar escribir en el archivo OUTPUT: %s.\n", strerror(errno));	
-					error = 1;	
+					fprintf(stderr, "Error al intentar escribir en el archivo OUTPUT: %s.\n", strerror(errno));
+					error = 1;
 					break;
 				}
             }
             int closeOk = fclose(outputFile);
-            if (closeOk == EOF){				
+            if (closeOk == EOF){
 				//Agregada corrección al manejo de errores. Ahora si da error revisa el errno para obtener el mensaje.
 				fprintf(stderr, "Error al intentar cerrar el archivo OUTPUT: %s.\n", strerror(errno));
 				return -1;
@@ -390,6 +393,15 @@ int getWordLength(char * word){
 	return i;
 }
 
+//1 if the argument is present, 0 if not
+int validateArgumentAppeareance(char** argv, int arg, char* arg1, char* arg2){
+    for(int i = 1; i < arg; i++){
+        if((strcmp(argv[i], arg1) == 0)||(strcmp(argv[i], arg2) == 0)){
+            return 1;
+        }
+    }
+    return 0;
+}
 
 char* searchArgumentValue(char** argv, int arg, char* arg1, char* arg2){
     for(int i = 1; i < arg; i++){
@@ -447,7 +459,7 @@ Array getFromStandardInput(){
 					return words;  //Devuelvo words con size = -1
 				}
             }
-        }        
+        }
 		if (ch < 0){
 			//Error al leer de stdin.
 			fprintf(stderr,"Error al leer de stdin: %s.\n",strerror(errno));
