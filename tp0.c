@@ -51,7 +51,7 @@ int insertArray(Array *a, char * element) {
     // a->used is the number of used entries, because a->array[a->used++] updates a->used only *after* the array has been accessed.
     // Therefore a->used can go up to a->size
     if (a->used == a->size) {
-        a->size = a->size * 2; //Duplico cada vez el size del array para despues hacer realloc.
+       a->used = a->size, a->size++; //Duplico cada vez el size del array para despues hacer realloc.
         a->array = (char **)Realloc(a->array, a->size * sizeof(char *));
         if (a->array == NULL){
 			//Falló realloc, ya se escribió el error en stderr. Devuelvo -1 para cancelar la ejecución.
@@ -97,7 +97,7 @@ int insertChar(DynamicWord *a, int element) {
     // a->used is the number of used entries, because a->array[a->used++] updates a->used only *after* the array has been accessed.
     // Therefore a->used can go up to a->size
     if (a->used == a->size) {
-        a->size = a->size * 2; //Duplico cada vez el size del array para despues hacer realloc.
+         a->used = a->size, a->size++; //Duplico cada vez el size del array para despues hacer realloc.
         a->word = (char *)Realloc(a->word, a->size * sizeof(char));
         if (a->word == NULL){
 			return -1;
@@ -438,7 +438,7 @@ Array getFromStandardInput(){
     struct pollfd mypoll = {STDIN_FILENO, POLLIN|POLLPRI};
     if(poll(&mypoll, 1, 1)){
         while(read(0, &ch, 1) > 0){
-            if((ch == 32) || (ch == 10)){
+            if(isSeparator(ch) == 1){
                 char * auxString = (char *)Malloc(sizeof(char) * auxInput.size);
                 strncpy(auxString, auxInput.word, auxInput.size);
                 insertArray(&words, auxString);
@@ -453,12 +453,12 @@ Array getFromStandardInput(){
             } else {
                 int insertOk = insertChar(&auxInput, ch);
                 if (insertOk < 0){
-					//Error del realloc.
-					freeDynamicArray(&words);
-					freeDynamicWord(&auxInput);
-					words.size = -1;
-					return words;  //Devuelvo words con size = -1
-				}
+					        //Error del realloc.
+					        freeDynamicArray(&words);
+					        freeDynamicWord(&auxInput);
+					        words.size = -1;
+					        return words;  //Devuelvo words con size = -1
+				        }
             }
         }
 		if (ch < 0){
