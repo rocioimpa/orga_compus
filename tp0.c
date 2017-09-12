@@ -132,6 +132,7 @@ size_t getFileSize(FILE* file);
 Array arrayOfWordsCorrectlyInitialized(int, Array);
 DynamicWord wordCorrectlyInitialized(int, DynamicWord);
 Array wordCorrectlyInserted(int, DynamicWord, Array);
+int isSeparator(int character);
 
 int main(int argc, char *argv[]){
 
@@ -391,7 +392,8 @@ Array getWordsFromFile(FILE* inputFile){
       storedWords.size = -1;
       return storedWords;
     }
-    if((currentCharacter == 32) || (currentCharacter == 10)){
+		printf("%d\n", currentCharacter);
+    if(isSeparator(currentCharacter) == 1){
         char * aWord = (char *)Malloc(sizeof(char) * currentWord.size);
         strncpy(aWord, currentWord.word, currentWord.size);
         insertArray(&storedWords, aWord);
@@ -459,6 +461,13 @@ Array getFromStandardInput(){
 		}
     }
     return words;
+}
+
+int isSeparator(int character){
+ 	if (((character > 0) && (character < 45)) || ((character > 45) && (character < 48)) || ((character > 57) && (character < 65))  || ((character > 90) && (character < 95)) || ((character > 95) && (character < 97)) || (character >= 123))
+ 		return 1;
+ 	else
+ 		return 0;
 }
 
 size_t getFileSize(FILE* file)
