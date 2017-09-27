@@ -1,8 +1,10 @@
-CFLAGS := -g -std=c99 -Wall -O0
-OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
+CFLAGS := -g -Wall
+OBJS := tp1.c palindrome.S
 
-tp1: $(OBJS)
-	$(CC) $(CFLAGS) $^ -o $@
+tp1: $(OBJS) 
+	$(CC) $(CFLAGS) $(OBJS) $^ -o $@
+
+tp1.S: 
 
 clean:
 	rm -f tp1 *.o core *.asm
