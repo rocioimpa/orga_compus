@@ -8,6 +8,8 @@ static struct option long_options[] =
 	{"input",required_argument,NULL,'i'},
 	{"help",no_argument,NULL,'h'},
 	{"version",no_argument,NULL,'V'},
+	{"ibuf-bytes",required_argument,NULL,'I'},
+	{"obuf-bytes",required_argument,NULL,'O'},
     {NULL, 0, NULL, 0}
 };
 
@@ -26,6 +28,10 @@ void showHelp(){
 	printf("%s\n", "-h --help		Print this information");
 	printf("%s\n", "-o --output		Path to output file");
 	printf("%s\n", "-i --input		Path to input file");
+	printf("%s\n", "-I, --ibuf-bytes		Byte-count of the input buffer.");
+	printf("%s\n", "-O, --obuf-bytes		Byte-count of the output buffer.");
+	
+
 	printf("%s\n", "Examples: ");
 	printf("%s\n", "tp0 -q -i input.txt -o output.txt");
 }
@@ -33,9 +39,11 @@ void showHelp(){
 int main(int argc, char *argv[]){
 	char* input;
 	char* output;
+	char* ibytes;
+	char* obytes;
 	int ch;
 	// loop over all of the options
-	while ((ch = getopt_long(argc, argv, "i:o:hv", long_options, NULL)) != -1)
+	while ((ch = getopt_long(argc, argv, "i:o:I:O:hv", long_options, NULL)) != -1)
 	{
 		// check to see if a single character or long option came through
 		switch (ch)
@@ -54,9 +62,18 @@ int main(int argc, char *argv[]){
 			case 'h':
 				showHelp();
 				break;
+			case 'I':
+				ibytes = optarg;
+				printf("%s\n",ibytes);
+				break;
+			case 'O':
+				obytes = optarg;
+				printf("%s\n",obytes);
+				break;
 			case '?':
 				//Ya se escribió un error a stderr (lo hizo la funcion getopt_long.
 				return -1;
 		}
 	}
+	
 }
