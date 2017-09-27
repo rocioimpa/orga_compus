@@ -54,6 +54,9 @@ int main(int argc, char *argv[]){
 			case 'h':
 				showHelp();
 				break;
+			case '?':
+				//Ya se escribió un error a stderr (lo hizo la funcion getopt_long.
+				return -1;
 		}
 	}
 }
