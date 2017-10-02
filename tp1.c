@@ -4,12 +4,12 @@
 #include <errno.h>
 #include <stdint.h>
 #include <ctype.h>
-#include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 typedef struct receivedParameters {
-	char* inputFilePath;
-	char* outputFilePath;
+	char* input;
+	char* output;
 	char* inputBufferByteCount;
 	char* outputBufferByteCount;
 } parameters_t;
@@ -29,8 +29,9 @@ static struct option long_options[] =
 
 void showVersion();
 void showHelp();
-FILE* openInputFile(char* pathToInputFile); 
-FILE* openOutputFile(char* pathToOutputFile); 
+FILE* openInputFile(char* input); 
+FILE* openOutputFile(char* output); 
+parameters_t getParameters(int argc, char **argv);
 
 /* ------------------------ */
 
@@ -80,74 +81,92 @@ FILE* openOutputFile(char* pathToOutputFile) {
 	return file;
 }
 
-int main(int argc, char *argv[]){
+parameters_t getParameters(int argc, char **argv){
 
-	int status;
+    int ch;
+    parameters_t receivedParameters;
+
+    receivedParameters.input = NULL;
+    receivedParameters.output = NULL;
+    receivedParameters.inputBufferByteCount = NULL;
+    receivedParameters.outputBufferByteCount = NULL;
+
+    // loop over all of the options
+    while ((ch = getopt_long(argc, argv, "hVi:o:I:O:", long_options, NULL)) != -1) {
+        // check to see if a single character or long option came through
+        switch (ch){
+            case 'o':
+                receivedParameters.input = optarg;
+                break;
+            case 'i':
+                receivedParameters.output = optarg;
+                break;
+            case 'V':
+                showVersion();
+                exit(0);
+                break;
+            case 'h':
+                showHelp();
+                exit(0);
+                break;
+            case 'I':
+                receivedParameters.inputBufferByteCount = optarg;
+                break;
+            case 'O':
+                receivedParameters.outputBufferByteCount = optarg;
+                break;
+            case '?':
+                if (optopt == 'i' || optopt == 'o' || optopt == 'I' || optopt == 'O') {
+                    fprintf (stderr, "No arguments provided for option -%c .\n", optopt);
+                } else if (isprint (optopt)) {
+                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                } else {
+                    fprintf (stderr, "Unknown option `\\x%x'.\n", optopt);
+                } //Ya se escribió un error a stderr (lo hizo la funcion getopt_long.
+            default:
+                showHelp();
+                exit(1);
+        }
+    }
+    return receivedParameters;
+
+}
+
+int main(int argc, char *argv[]){
 
     FILE* input;
     FILE* output;
 
-	char* ibytes;
-	char* obytes;
+	int status;
 
-	int ch;
-	parameters_t receivedParameters;
-
-	// loop over all of the options
-	while ((ch = getopt_long(argc, argv, "hVi:o:I:O:", long_options, NULL)) != -1)
-	{
-		// check to see if a single character or long option came through
-		switch (ch)
-		{
-			case 'o':
-				receivedParameters.outputFilePath = optarg; 
-				break;
-			case 'i':
-				receivedParameters.inputFilePath = optarg; 
-				break;
-			case 'V':
-				showVersion();
-				break;
-			case 'h':
-				showHelp();
-				break;
-			case 'I':
-				ibytes = optarg;
-				//getInputBufferSize();
-				break;
-			case 'O':
-				obytes = optarg;
-				//getOutputBufferSize();
-				break;
-			case '?':
-				//Ya se escribió un error a stderr (lo hizo la funcion getopt_long.
-				return -1;
-		}
-	}
+	parameters_t receivedParameters = getParameters(argc,argv);
+    printf("%s\n", "got the parameters");
 	
-	if ((((receivedParameters.inputFilePath == NULL) && (receivedParameters.outputFilePath == NULL))) && (argc > 1)) {
+	if ((((receivedParameters.input == NULL) && (receivedParameters.output == NULL))) && (argc > 1)) {
         return 0;
     }
 
-    if (receivedParameters.inputFilePath != NULL) {
-        input = openInputFile(receivedParameters.inputFilePath);
-    } else {
+    if (receivedParameters.input != NULL) {
+        input = openInputFile(receivedParameters.input);
+    }
+    else {
         input = stdin;
     }
 
-    if (receivedParameters.outputFilePath != NULL) {
-        output = openOutputFile(receivedParameters.outputFilePath);
+    if (receivedParameters.output != NULL) {
+        output = openOutputFile(receivedParameters.output);
     } else {
         output = stdout;
     }
 
-    if (status != 0) {
-        //fprintf(stderr, "An error has occurred %s\n");
-    }
+    int inputFileDescriptor = fileno(input);
+    int outputFileDescriptor = fileno(output);
+
+    printf("File descriptor for input is: %i\n", inputFileDescriptor);
+    printf("File descriptor for output is: %i\n", outputFileDescriptor);
 
     fclose(input);
     fclose(output);
 
     return status;
-
 }
