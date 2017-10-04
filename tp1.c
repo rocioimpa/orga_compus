@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <string.h>
+#include "palindromes.h"
 
 typedef struct receivedParameters {
 	char* input;
@@ -137,10 +138,9 @@ int main(int argc, char *argv[]){
     FILE* input;
     FILE* output;
 
-	int status;
+	int result;
 
 	parameters_t receivedParameters = getParameters(argc,argv);
-    printf("%s\n", "got the parameters");
 	
 	if ((((receivedParameters.input == NULL) && (receivedParameters.output == NULL))) && (argc > 1)) {
         return 0;
@@ -162,11 +162,10 @@ int main(int argc, char *argv[]){
     int inputFileDescriptor = fileno(input);
     int outputFileDescriptor = fileno(output);
 
-    printf("File descriptor for input is: %i\n", inputFileDescriptor);
-    printf("File descriptor for output is: %i\n", outputFileDescriptor);
+    result = findWordsThatArePalindromes(inputFileDescriptor, outputFileDescriptor);
 
     fclose(input);
     fclose(output);
 
-    return status;
+    return result;
 }
