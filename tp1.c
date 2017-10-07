@@ -11,8 +11,8 @@
 typedef struct receivedParameters {
 	char* input;
 	char* output;
-	char* inputBufferByteCount;
-	char* outputBufferByteCount;
+	int inputBufferByteCount;
+	int outputBufferByteCount;
 } parameters_t;
 
 static struct option long_options[] =
@@ -89,18 +89,18 @@ parameters_t getParameters(int argc, char **argv){
 
     receivedParameters.input = NULL;
     receivedParameters.output = NULL;
-    receivedParameters.inputBufferByteCount = NULL;
-    receivedParameters.outputBufferByteCount = NULL;
+    receivedParameters.inputBufferByteCount = 1; //valores por defecto
+    receivedParameters.outputBufferByteCount = 1; //valores por defecto
 
     // loop over all of the options
     while ((ch = getopt_long(argc, argv, "hVi:o:I:O:", long_options, NULL)) != -1) {
         // check to see if a single character or long option came through
         switch (ch){
             case 'o':
-                receivedParameters.input = optarg;
+                receivedParameters.output = optarg;
                 break;
             case 'i':
-                receivedParameters.output = optarg;
+                receivedParameters.input = optarg;
                 break;
             case 'V':
                 showVersion();
@@ -111,10 +111,10 @@ parameters_t getParameters(int argc, char **argv){
                 exit(0);
                 break;
             case 'I':
-                receivedParameters.inputBufferByteCount = optarg;
+                receivedParameters.inputBufferByteCount = atoi(optarg);
                 break;
             case 'O':
-                receivedParameters.outputBufferByteCount = optarg;
+                receivedParameters.outputBufferByteCount = atoi(optarg);
                 break;
             case '?':
                 if (optopt == 'i' || optopt == 'o' || optopt == 'I' || optopt == 'O') {
@@ -161,7 +161,6 @@ int main(int argc, char *argv[]){
 
     int inputFileDescriptor = fileno(input);
     int outputFileDescriptor = fileno(output);
-	printf("%d\n",inputFileDescriptor);
     //result = findWordsThatArePalindromes(inputFileDescriptor, outputFileDescriptor);
 	
 	palindrome(inputFileDescriptor,receivedParameters.inputBufferByteCount,outputFileDescriptor,receivedParameters.outputBufferByteCount);
