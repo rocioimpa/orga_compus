@@ -161,9 +161,11 @@ int main(int argc, char *argv[]){
 
     int inputFileDescriptor = fileno(input);
     int outputFileDescriptor = fileno(output);
-
-    result = findWordsThatArePalindromes(inputFileDescriptor, outputFileDescriptor);
-
+	printf("%d\n",inputFileDescriptor);
+    //result = findWordsThatArePalindromes(inputFileDescriptor, outputFileDescriptor);
+	
+	palindrome(inputFileDescriptor,receivedParameters.inputBufferByteCount,outputFileDescriptor,receivedParameters.outputBufferByteCount);
+	
     fclose(input);
     fclose(output);
 

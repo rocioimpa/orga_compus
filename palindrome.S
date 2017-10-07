@@ -3,6 +3,14 @@
 #include <mips/regdef.h>
 #include <sys/syscall.h>
 
+	.globl fdinput
+	.globl fdoutput
+	.globl bufferInput
+	.data
+	.align  2
+	fdinput: .word 8
+	fdoutput: .word 8
+	bufferInput: .space 256
 	.text			# segmento de texto del programa
 	
 	.abicalls
@@ -11,39 +19,59 @@
 	.globl palindrome
 	.ent palindrome
 palindrome:
-	# debugging info: descripcion del stack frame
-	.frame	$fp, 40, ra	# $fp: registro usado como frame pointer, 40: tamañodel stack frame, ra: registro que almacena el return address
+	.frame	$fp, 40, ra		# $fp: registro usado como frame pointer, 40: tamañodel stack frame, ra: registro que almacena el return address
 	
 	# bloque para codigo PIC
-	.set	noreorder	# apaga reordenamiento de instrucciones
-	.cpload t9		# directiva usada para codigo PIC
-	.set	reorder		# enciende reordenamiento de instrucciones
+	.set	noreorder		# apaga reordenamiento de instrucciones
+	.cpload t9				# directiva usada para codigo PIC
+	.set	reorder			# enciende reordenamiento de instrucciones
 	
-	# creo stack frame
-	subu	sp, sp, 40	# 4 (SRA) + 2 (LTA) + 4 (ABA)
+	subu	sp, sp, 40		#Se crea el stack frame
 
-	# directiva para codigo PIC
-	.cprestore 24		# inserta aqui "sw gp, 24(sp)", mas "lw gp, 24(sp)" luego de cada jal.
-	# salvado de callee-saved regs en SRA	
-	sw	$fp, 28(sp)
-	sw	ra, 32(sp)
-
-	# de aqui al fin de la funcion uso $fp en lugar de sp.
-	move	$fp, sp
+							# directiva para codigo PIC
+	.cprestore 24			# inserta aqui "sw gp, 24(sp)", mas "lw gp, 24(sp)" luego de cada jal.
 	
-	# salvo 1er arg (siempre)
-	sw	a0, 40($fp)	# n: a0, sp+40
+	sw	$fp, 28(sp)			# guardo fp en el stack
+	sw	ra, 32(sp)			# guardo ra en el stack
+
+	move	$fp, sp 		# de aqui al fin de la funcion uso $fp en lugar de sp.
 	
 	#Inicio funcion palindrome
 	
-	#	write(1, " ", 1);
-	li	a0, 1		# fd=1: a0
-	la	a1, sep		# buf=" ": a1	## la, NO lw
-	li	a2, 13		# count=1: a2
+	sw	a0, fdinput			# almaceno arg fileno de input e:n global var
+	sw	a1, 40($fp)			# almaceno arg cantidad de bytes de buffer input
+	sw	a2, fdoutput		# almaceno arg fileno de output en global var
+	sw	a3, 44($fp)			# almaceno arg cantidad de bytes de buffer output
+	
+	
+############################################################################
+############ FUNCION READ BYTES AND STORE TO BUFFER ########################
+############################################################################
+read_bytes:
+	lw t1,40($fp)			# sizeALeer = ifbytes
+	lw t2, bufferInput		# guardo el addr del buffer
+	#while(bytesread = read (fdinput, buffer, ibytes) < sizeALeer);
+while_read:					
+	lw  a0, fdinput			# a0 es fd del file input
+    move  a1, t2			# a1 es el buffer donde almacenar
+    move  a2, t1			# a2 es la cantidad de bytes a leer
+    li  v0, SYS_read		# v0 es la syscall SYS_read
+    syscall
+    
+    #control de errores
+    bnez a0, read_fail		#a0 != 0 then salto a error
+    #bytesALeer -= sizeLeido
+    subu t1, t1, v0			#bytesALeer -= lectura
+    addu t2, t2, v0			#aumento el addr del buffer para escribir correctamente si es que todavia no se escribio todo
+    bnez t1, while_read		#si todavia queda algo por leer, vuelvo al loop.
+    
+    #Test escribir a consola el buffer
+	li	a0, 1
+	lw	a1, bufferInput
+	lw	a2, 40($fp)
 	li	v0, SYS_write
 	syscall
-	
-	
+    	
 	#Fin funcion palindrome
 end_palindrome:
 	# return;
@@ -55,29 +83,14 @@ end_palindrome:
 	addu	sp, sp, 40
 	# vuelvo a funcion llamante
 	jr	ra
-
+	
+read_fail:
+	subu v0, zero, a3		
+	b end_palindrome
+	
 	.end	palindrome
 	.size	palindrome,.-palindrome
 	
 	
 	.rdata			# segmento read-only data
 
-	.align 2
-name:	.word name_0, name_1, name_2, name_3, name_4, \
-	      name_5, name_6, name_7, name_8, name_9
-	.size name, 40
-
-	.align 0		# alineacion 2^0
-
-name_0: .asciiz "cero"
-name_1: .asciiz "uno"
-name_2: .asciiz "dos"
-name_3: .asciiz "tres"
-name_4: .asciiz "cuatro"
-name_5: .asciiz "cinco"
-name_6: .asciiz "seis"
-name_7: .asciiz "siete"
-name_8: .asciiz "ocho"
-name_9: .asciiz "nueve"
-
-sep:	.ascii "Hello world!"
