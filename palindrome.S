@@ -12,6 +12,7 @@
 	fdoutput: .space 8
 	bufferInput: .space 256
 	bufferOutput: .space 256
+
 	.text			# segmento de texto del programa
 	
 	.abicalls
@@ -43,11 +44,36 @@ palindrome:
 	sw	a1, 40($fp)			# almaceno arg cantidad de bytes de buffer input
 	sw	a2, fdoutput		# almaceno arg fileno de output en global var
 	sw	a3, 44($fp)			# almaceno arg cantidad de bytes de buffer output
-	
 read_bytes:
 	lw t1,40($fp)			# sizeALeer = ibytes
 	la t2, bufferInput		# guardo el addr del buffer
 	#while(bytesread = read (fdinput, buffer, ibytes) < sizeALeer);
+	jal check_palindrome	# llamado a la funcion recursiva check_palindrome
+
+check_palindrome:
+	slti	t3, a1, 2		# Se fija que la palabra tenga mas de dos caracteres
+	bne	t3, zero, returnTrue # Si tiene un solo caracter, retorna verdadero (es palindromo)
+
+	lb	t3, 0(t2)			# Carga en t3 el byte 0 de t2
+	addi	t1, a0, -1
+	add	t1, t1, t2
+	lb	t1, 0(t1)
+	bne	t3, t1, returnFalse
+	
+	# Shift pointer, length, recurse
+	addi	a0, a0, -2
+	addi	t2, t2, 1
+	j	check_palindrome
+	
+returnFalse:
+	addi	v0, zero, 0
+	jr	ra
+
+
+returnTrue:
+	addi	v0, zero, 1
+	jr	ra	
+
 while_read:					
 	lw  a0, fdinput			# a0 es fd del file input
     move  a1, t2			# a1 es el buffer donde almacenar
