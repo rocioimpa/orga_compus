@@ -1,0 +1,1 @@
+Simple string with two words: One word is a palindrome and the other is not.

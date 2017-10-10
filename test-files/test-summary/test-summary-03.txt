@@ -1,0 +1,1 @@
+File with a non palindrome word. This test case should return an empty file.

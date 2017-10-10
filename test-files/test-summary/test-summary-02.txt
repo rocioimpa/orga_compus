@@ -1,0 +1,1 @@
+Simple string with a palindrome word and some uppercase and lowercase characters.

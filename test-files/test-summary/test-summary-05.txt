@@ -1,0 +1,1 @@
+String with new lines, upper and lower case.

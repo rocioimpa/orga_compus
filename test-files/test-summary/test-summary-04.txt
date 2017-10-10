@@ -1,0 +1,1 @@
+Added extra complexity by adding invalid characters, uppercase and lowercase characters
